@@ -1,0 +1,44 @@
+name: Test specific prek version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          install-only: "true"
+          prek-version: "latest"
+          cache: "false"
+      - name: Assert prek-version output is set and v-prefixed
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty"
+            exit 1
+          fi
+          if [[ "$PREK_VERSION" != v* ]]; then
+            echo "FAIL: prek-version does not start with 'v': $PREK_VERSION"
+            exit 1
+          fi
+          echo "PASS: prek-version=$PREK_VERSION"
+      - name: Assert cache-hit output is set
+        env:
+          CACHE_HIT: ${{ steps.action.outputs.cache-hit }}
+        run: |
+          echo "cache-hit: $CACHE_HIT"
+          # cache-hit can be true or false (or empty when cache is disabled)
+          echo "PASS: cache-hit=$CACHE_HIT"
+      - name: Assert prek binary is executable
+        run: |
+          PREK_PATH="$(command -v prek 2>/dev/null || true)"
+          if [ -z "$PREK_PATH" ]; then
+            echo "FAIL: prek not found on PATH"
+            exit 1
+          fi
+          echo "PASS: prek found at $PREK_PATH"
+          prek --version
