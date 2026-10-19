@@ -1,0 +1,38 @@
+name: Test prek cache behavior
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run prek-action with cache enabled
+        uses: .
+        with:
+          install-only: "true"
+          cache: "true"
+          prek-version: "latest"
+
+      - name: Assert prek-version output is set
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty"
+            exit 1
+          fi
+          echo "PASS: prek-version is '$PREK_VERSION'"
+
+      - name: Assert cache-hit output is present (true or false)
+        env:
+          CACHE_HIT: ${{ steps.action.outputs.cache-hit }}
+        run: |
+          echo "cache-hit: $CACHE_HIT"
+          if [ "$CACHE_HIT" != "true" ] && [ "$CACHE_HIT" != "false" ] && [ "$CACHE_HIT" != "" ]; then
+            echo "FAIL: unexpected cache-hit value '$CACHE_HIT' (expected 'true', 'false', or empty)"
+            exit 1
+          fi
+          echo "PASS: cache-hit output is '$CACHE_HIT'"

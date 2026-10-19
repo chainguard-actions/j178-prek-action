@@ -1,0 +1,31 @@
+name: Test specific prek version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Install specific prek version
+        uses: .
+        with:
+          install-only: "true"
+          prek-version: "0.3.x"
+
+      - name: Assert prek-version output is set
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty"
+            exit 1
+          fi
+          echo "PASS: prek-version is '$PREK_VERSION'"
+
+      - name: Assert prek binary works
+        run: |
+          prek --version
+          echo "PASS: prek --version succeeded"
