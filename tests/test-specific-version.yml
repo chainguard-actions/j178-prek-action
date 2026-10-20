@@ -1,0 +1,52 @@
+name: Test specific prek version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          install-only: "true"
+          cache: "false"
+          prek-version: "latest-known"
+      - name: Assert prek-version output is set
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty"
+            exit 1
+          fi
+          # Version may have a leading 'v' prefix (e.g. v0.5.6 or 0.5.6)
+          if ! echo "$PREK_VERSION" | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "FAIL: prek-version '$PREK_VERSION' does not look like a semver"
+            exit 1
+          fi
+          echo "PASS: prek-version is '$PREK_VERSION'"
+      - name: Assert prek binary is installed and reports version
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          if ! command -v prek > /dev/null 2>&1; then
+            echo "FAIL: prek binary not found on PATH"
+            exit 1
+          fi
+          INSTALLED_VERSION=$(prek --version 2>&1 | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+          echo "installed version: $INSTALLED_VERSION"
+          echo "expected version: $PREK_VERSION"
+          if [ -z "$INSTALLED_VERSION" ]; then
+            echo "WARN: could not parse version from prek --version output, skipping version match check"
+          else
+            # Normalize both versions by stripping leading 'v' for comparison
+            INSTALLED_NORM="${INSTALLED_VERSION#v}"
+            EXPECTED_NORM="${PREK_VERSION#v}"
+            if [ "$INSTALLED_NORM" != "$EXPECTED_NORM" ]; then
+              echo "FAIL: installed version '$INSTALLED_VERSION' does not match expected '$PREK_VERSION'"
+              exit 1
+            fi
+          fi
+          echo "PASS"

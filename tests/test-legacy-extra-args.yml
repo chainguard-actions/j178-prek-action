@@ -1,0 +1,42 @@
+name: Test legacy extra_args input (deprecated)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up a minimal pre-commit config in a test workspace
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/legacy-args"
+          cd "$GITHUB_WORKSPACE/tests/fixtures/legacy-args"
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          cat > .pre-commit-config.yaml << 'EOF'
+          repos:
+            - repo: builtin
+              hooks:
+                - id: trailing-whitespace
+                - id: end-of-file-fixer
+          EOF
+          echo "hello world" > test.txt
+          git add .
+          git commit -m "initial commit"
+      - id: action
+        uses: .
+        with:
+          # Use the deprecated extra_args (underscore) input
+          extra_args: "--all-files"
+          cache: "false"
+          working-directory: "${{ github.workspace }}/tests/fixtures/legacy-args"
+      - name: Assert prek-version output is set (action ran successfully)
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty; action may not have run"
+            exit 1
+          fi
+          echo "PASS: action ran with legacy extra_args input, prek-version='$PREK_VERSION'"

@@ -1,0 +1,45 @@
+name: Test basic prek run with built-in hooks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up a minimal pre-commit config in a test workspace
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/basic-run"
+          cd "$GITHUB_WORKSPACE/tests/fixtures/basic-run"
+          # Initialize a git repo so prek can run
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          # Create a minimal pre-commit config using only built-in hooks
+          cat > .pre-commit-config.yaml << 'EOF'
+          repos:
+            - repo: builtin
+              hooks:
+                - id: trailing-whitespace
+                - id: end-of-file-fixer
+          EOF
+          # Create a clean test file
+          echo "hello world" > test.txt
+          git add .
+          git commit -m "initial commit"
+      - id: action
+        uses: .
+        with:
+          install-only: "false"
+          cache: "false"
+          extra-args: "--all-files"
+          working-directory: "${{ github.workspace }}/tests/fixtures/basic-run"
+      - name: Assert prek-version output is set
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ -z "$PREK_VERSION" ]; then
+            echo "FAIL: prek-version output is empty"
+            exit 1
+          fi
+          echo "PASS: prek ran and reported version '$PREK_VERSION'"

@@ -1,0 +1,55 @@
+name: Test sha256 checksum override
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Compute sha256 of the prek release archive
+        id: checksum
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x86_64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          LIBC=gnu
+          if ldd --version 2>&1 | grep -qi musl; then LIBC=musl; fi
+          URL="https://github.com/j178/prek/releases/download/v0.2.1/prek-${ARCH}-unknown-linux-${LIBC}.tar.gz"
+          echo "Downloading $URL"
+          curl -sSfL "$URL" -o /tmp/prek-archive.tar.gz
+          SUM=$(sha256sum /tmp/prek-archive.tar.gz | awk '{print $1}')
+          echo "sha256: $SUM"
+          echo "sha256=$SUM" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        with:
+          install-only: "true"
+          cache: "false"
+          prek-version: "0.2.1"
+          sha256: ${{ steps.checksum.outputs.sha256 }}
+      - name: Assert prek-version output is 0.2.1
+        env:
+          PREK_VERSION: ${{ steps.action.outputs.prek-version }}
+        run: |
+          echo "prek-version: $PREK_VERSION"
+          if [ "${PREK_VERSION#v}" != "0.2.1" ]; then
+            echo "FAIL: expected prek-version 0.2.1"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert prek binary is installed
+        run: |
+          if ! command -v prek > /dev/null 2>&1; then
+            echo "FAIL: prek binary not found on PATH"
+            exit 1
+          fi
+          OUT=$(prek --version 2>&1 || true)
+          echo "prek --version: $OUT"
+          if ! echo "$OUT" | grep -q '0\.2\.1'; then
+            echo "FAIL: expected prek 0.2.1"
+            exit 1
+          fi
+          echo "PASS"
