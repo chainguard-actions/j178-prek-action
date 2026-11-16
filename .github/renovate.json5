@@ -1,0 +1,76 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+  ],
+  schedule: [
+    '* * 1,15 * *'
+  ],
+  prHourlyLimit: 10,
+  labels: [
+    'internal'
+  ],
+  semanticCommits: 'disabled',
+  // pre-commit is currently in beta testing, must opt in
+  'pre-commit': {
+    enabled: true
+  },
+  enabledManagers: [
+    'github-actions',
+    'npm',
+    'pre-commit',
+    'custom.regex',
+  ],
+  customManagers: [
+    // Update SHA-pinned GitHub Actions references from their version comments.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/README\\.md$/',
+      ],
+      matchStrings: [
+        '\\suses: (?<depName>[\\w-]+/[\\w-]+)(?<path>/.*)?@(?<currentDigest>[a-f0-9]{40}) # (?<currentValue>v\\d+\\.\\d+\\.\\d+)\\s',
+      ],
+      datasourceTemplate: 'github-tags',
+      versioningTemplate: 'semver',
+    },
+  ],
+  packageRules: [
+    // Group all GitHub Actions updates together
+    {
+      groupName: 'GitHub Actions',
+      matchManagers: ['github-actions'],
+      matchDepTypes: ['action'],
+      // Pin GitHub Actions to immutable SHAs
+      pinDigests: true
+    },
+    {
+      groupName: 'pre-commit',
+      matchManagers: ['pre-commit'],
+    },
+    // Annotate GitHub Actions SHAs with a SemVer version.
+    {
+      extends: [
+        'helpers:pinGitHubActionDigests'
+      ],
+      extractVersion: '^(?<version>v?\\d+\\.\\d+\\.\\d+)$',
+      versioning: 'regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$'
+    },
+    {
+      matchManagers: [ 'npm', 'pre-commit', 'github-actions', 'custom.regex' ],
+      minimumReleaseAge: '14 days'
+    },
+    // Group @actions/* toolkit packages together
+    {
+      groupName: 'GitHub Actions toolkit',
+      matchManagers: ['npm'],
+      matchPackageNames: ['@actions/**'],
+    },
+    // Group dev dependencies together
+    {
+      groupName: 'npm dev dependencies',
+      matchManagers: ['npm'],
+      matchDepTypes: ['devDependencies'],
+    },
+  ]
+}

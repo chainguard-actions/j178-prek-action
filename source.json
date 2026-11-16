@@ -1,6 +1,16 @@
 {
   "owner": "j178",
   "repo": "prek-action",
-  "version": "",
-  "url": "https://github.com/j178/prek-action"
+  "version": "v3.1.1",
+  "commit_sha": "7b101f8338a08d2bd6fdb3625e4e7692428763a3",
+  "url": "https://github.com/j178/prek-action",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/j178/prek-action/v3.1.1/sha256-c967d6514ae324c5b5f6f24edaf96fa8ea3f66fe5141c17cd8395b8f26f29a11.tar.gz",
+    "sha256": "c967d6514ae324c5b5f6f24edaf96fa8ea3f66fe5141c17cd8395b8f26f29a11",
+    "size_bytes": 497784
+  }
 }
