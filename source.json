@@ -4,8 +4,13 @@
   "version": "v3.0.2",
   "commit_sha": "af4d4fcb6922b8e6f65c0426947125fcc38794ce",
   "url": "https://github.com/j178/prek-action",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/j178/prek-action/v3.0.2/sha256-262ee73a0edab660e21304b49815fbeb74c8db9c01e190adb1b9bbea7bfb13b1.tar.gz",
+    "sha256": "262ee73a0edab660e21304b49815fbeb74c8db9c01e190adb1b9bbea7bfb13b1",
+    "size_bytes": 508950
+  }
 }
